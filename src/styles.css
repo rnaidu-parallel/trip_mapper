@@ -1,0 +1,222 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+
+#stage {
+  width: min(100vw, calc(100vh * 9 / 16));
+  height: min(100vh, calc(100vw * 16 / 9));
+  margin: 0 auto;
+  position: relative;
+  background: #000;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+/* Subtle film grain — SVG noise overlay */
+#stage > #grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 1   0 0 0 0 1   0 0 0 0 1   0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+
+/* Cinematic framing: subtle vignette + top/bottom gradients to anchor HUD */
+#stage::before,
+#stage::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 180px;
+  pointer-events: none;
+  z-index: 2;
+}
+#stage::before {
+  top: 0;
+  height: 220px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0) 100%);
+}
+#stage::after {
+  bottom: 0;
+  height: 280px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0) 100%);
+}
+
+#overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 36px 28px 80px;
+  z-index: 3;
+}
+
+#hud {
+  text-align: left;
+  /* sits at bottom now, anchored by ::after gradient */
+  margin-top: auto;
+}
+
+#region-label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 8px;
+  transition: opacity 0.35s ease;
+}
+
+#stop-label {
+  font-size: 44px;
+  font-weight: 300;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: #fff;
+  transition: opacity 0.3s ease;
+}
+
+#date-label {
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+  margin-top: 10px;
+}
+
+#counter {
+  position: absolute;
+  top: 36px;
+  right: 28px;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  color: rgba(255, 255, 255, 0.55);
+  text-transform: uppercase;
+}
+#distance {
+  position: absolute;
+  top: 56px;
+  right: 28px;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+#controls {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  z-index: 10;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+
+#controls button {
+  background: rgba(255,255,255,0.95);
+  color: #111;
+  border: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+#controls input[type='range'] {
+  width: 220px;
+}
+
+#time {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  min-width: 64px;
+}
+
+/* Recording mode: hide UI chrome */
+body.recording #controls { display: none; }
+body.recording #stage::before,
+body.recording #stage::after { /* keep for cinema feel in recording */ }
+body.recording .maplibregl-ctrl-bottom-left,
+body.recording .maplibregl-ctrl-bottom-right { display: none !important; }
+
+[hidden] { display: none !important; }
+
+/* Transport icon — refined */
+#transport-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: -16px;
+  margin-top: -16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  pointer-events: none;
+  z-index: 5;
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+  transform-origin: center;
+  will-change: transform, left, top;
+}
+
+#preload-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+  z-index: 20;
+}
+#preload-bar {
+  width: 50%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#preload-fill {
+  height: 100%;
+  width: 0%;
+  background: #ffffff;
+  transition: width 0.1s linear;
+}
+#preload-text {
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+}

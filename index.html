@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asia Trip</title>
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="stage">
+      <div id="map"></div>
+      <div id="grain"></div>
+      <div id="overlay">
+        <div id="hud">
+          <div id="region-label"></div>
+          <div id="stop-label"></div>
+        </div>
+        <div id="counter"></div>
+        <div id="distance"></div>
+      </div>
+      <div id="controls">
+        <button id="preload">⤓ Preload</button>
+        <button id="play">▶ Play</button>
+        <button id="restart">⟲ Restart</button>
+        <input id="scrub" type="range" min="0" max="1000" value="0" />
+        <span id="time"></span>
+      </div>
+      <div id="transport-icon" hidden></div>
+      <div id="preload-overlay" hidden>
+        <div id="preload-bar"><div id="preload-fill"></div></div>
+        <div id="preload-text">Preloading tiles…</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

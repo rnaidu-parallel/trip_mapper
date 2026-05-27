@@ -22,3 +22,6 @@ inspect
 
 # local tooling state
 .claude
+
+# personal/local-only journeys (not committed to the upstream repo)
+journeys/asia-trip.js

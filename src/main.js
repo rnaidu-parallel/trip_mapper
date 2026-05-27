@@ -1,8 +1,26 @@
 import maplibregl from 'maplibre-gl';
 import { journey } from './journey.js';
 import { buildTimeline, stateAtTime, TrailCache, buildStopsGeoJSON } from './animation.js';
+import { THEME, MAP_SOURCES, RENDER, TRANSPORT } from './config.js';
+import { resolvePreset, DEFAULT_PRESET } from './presets.js';
 
-const SAT_TILES = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+// --- Output preset: drives HUD safe zones via CSS variables ---
+const presetName = new URLSearchParams(location.search).get('preset') || DEFAULT_PRESET;
+const preset = resolvePreset(presetName);
+const root = document.documentElement;
+root.style.setProperty('--safe-top', `${preset.safeTop}px`);
+root.style.setProperty('--safe-bottom', `${preset.safeBottom}px`);
+root.style.setProperty('--safe-left', `${preset.safeLeft}px`);
+root.style.setProperty('--safe-right', `${preset.safeRight}px`);
+root.style.setProperty('--stage-aspect', `${preset.width} / ${preset.height}`);
+document.body.dataset.preset = presetName;
+
+const rasterGrading = {
+  'raster-saturation': THEME.rasterSaturation,
+  'raster-contrast': THEME.rasterContrast,
+  'raster-brightness-min': THEME.rasterBrightnessMin,
+  'raster-fade-duration': 0
+};
 
 const style = {
   version: 8,
@@ -11,14 +29,14 @@ const style = {
     // Low-zoom global base — always visible, fills gaps during fast pans
     satelliteBase: {
       type: 'raster',
-      tiles: [SAT_TILES],
+      tiles: [MAP_SOURCES.satelliteTiles],
       tileSize: 256,
       maxzoom: 5,
       attribution: 'Imagery © Esri'
     },
     satellite: {
       type: 'raster',
-      tiles: [SAT_TILES],
+      tiles: [MAP_SOURCES.satelliteTiles],
       tileSize: 256,
       maxzoom: 17,
       attribution: 'Imagery © Esri, Maxar, Earthstar Geographics'
@@ -26,32 +44,12 @@ const style = {
     // OpenFreeMap vector tiles — used here only for a uniform water mask
     ofm: {
       type: 'vector',
-      url: 'https://tiles.openfreemap.org/planet'
+      url: MAP_SOURCES.openFreeMapStyle
     }
   },
   layers: [
-    {
-      id: 'satellite-base',
-      type: 'raster',
-      source: 'satelliteBase',
-      paint: {
-        'raster-saturation': -0.15,
-        'raster-contrast': 0.12,
-        'raster-brightness-min': 0.05,
-        'raster-fade-duration': 0
-      }
-    },
-    {
-      id: 'satellite',
-      type: 'raster',
-      source: 'satellite',
-      paint: {
-        'raster-saturation': -0.15,
-        'raster-contrast': 0.12,
-        'raster-brightness-min': 0.05,
-        'raster-fade-duration': 0
-      }
-    },
+    { id: 'satellite-base', type: 'raster', source: 'satelliteBase', paint: rasterGrading },
+    { id: 'satellite',      type: 'raster', source: 'satellite',     paint: rasterGrading },
     // Uniform dark ocean — eliminates per-zoom satellite-blue shifts
     {
       id: 'water-mask',
@@ -59,8 +57,8 @@ const style = {
       source: 'ofm',
       'source-layer': 'water',
       paint: {
-        'fill-color': '#0a1828',
-        'fill-opacity': 0.92,
+        'fill-color': THEME.waterColor,
+        'fill-opacity': THEME.waterOpacity,
         'fill-antialias': true
       }
     }
@@ -84,7 +82,7 @@ const map = new maplibregl.Map({
   bearing: 0,
   antialias: true,
   attributionControl: false,
-  maxTileCacheSize: 2048,
+  maxTileCacheSize: RENDER.maxTileCacheSize,
   fadeDuration: 0,
   refreshExpiredTiles: false
 });
@@ -94,7 +92,7 @@ window.__map = map;
 // Evenly-spaced subsample of a coord list. Keeps first + last, reduces vertex
 // count for fast MapLibre tessellation. OSRM returns thousands of points; we
 // only need ~40 to render a smooth-looking road curve at our zoom levels.
-function subsampleCoords(coords, target = 40) {
+function subsampleCoords(coords, target = RENDER.osrmRouteSamples) {
   if (coords.length <= target) return coords;
   const out = [];
   const step = (coords.length - 1) / (target - 1);
@@ -122,12 +120,12 @@ async function fetchGroundRoutes(journey) {
     tasks.push(
       Promise.race([
         fetch(url).then((r) => r.json()),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), RENDER.osrmTimeoutMs))
       ])
         .then((json) => {
           const coords = json?.routes?.[0]?.geometry?.coordinates;
           if (Array.isArray(coords) && coords.length >= 2) {
-            const sampled = subsampleCoords(coords, 40);
+            const sampled = subsampleCoords(coords);
             sampled[0] = prev.coords;
             sampled[sampled.length - 1] = stop.coords;
             stop.routeCoords = sampled;
@@ -168,16 +166,18 @@ function setupMap() {
   // This keeps the active dot's amber glow from covering the trail's last
   // ~30px near the destination; ring and dot sit on top of trail end.
 
-  // Soft amber glow on active stop only — drawn UNDER the trail. Kept small
-  // so it doesn't create a visible halo between trail tip and dot center.
+  const activeExpr = ['boolean', ['feature-state', 'active'], false];
+
+  // Soft glow on active stop only — drawn UNDER the trail. Kept small so it
+  // doesn't create a visible halo between trail tip and dot centre.
   map.addLayer({
     id: 'stops-active-glow',
     type: 'circle',
     source: 'stops',
     paint: {
-      'circle-radius': ['case', ['boolean', ['feature-state', 'active'], false], 8, 0],
-      'circle-color': '#ffd089',
-      'circle-opacity': 0.22,
+      'circle-radius': ['case', activeExpr, THEME.activeGlowRadius, 0],
+      'circle-color': THEME.activeGlowColor,
+      'circle-opacity': THEME.activeGlowOpacity,
       'circle-blur': 0.5
     }
   });
@@ -189,10 +189,10 @@ function setupMap() {
     source: 'trail',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': '#ffe4a8',
-      'line-width': 8,
-      'line-blur': 6,
-      'line-opacity': 0.32
+      'line-color': THEME.trailHaloColor,
+      'line-width': THEME.trailHaloWidth,
+      'line-blur': THEME.trailHaloBlur,
+      'line-opacity': THEME.trailHaloOpacity
     }
   });
   map.addLayer({
@@ -201,8 +201,8 @@ function setupMap() {
     source: 'trail',
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
-      'line-color': '#ffffff',
-      'line-width': 2.8,
+      'line-color': THEME.trailColor,
+      'line-width': THEME.trailWidth,
       'line-opacity': 0.95
     }
   });
@@ -214,10 +214,10 @@ function setupMap() {
     source: 'stops',
     filter: ['<=', ['get', 'idx'], -1],
     paint: {
-      'circle-radius': ['case', ['boolean', ['feature-state', 'active'], false], 7, 4.5],
+      'circle-radius': ['case', activeExpr, 7, 4.5],
       'circle-color': 'rgba(0,0,0,0)',
-      'circle-stroke-color': '#ffffff',
-      'circle-stroke-width': 1.3,
+      'circle-stroke-color': THEME.ringColor,
+      'circle-stroke-width': THEME.ringWidth,
       'circle-stroke-opacity': 0.95
     }
   });
@@ -228,11 +228,8 @@ function setupMap() {
     source: 'stops',
     filter: ['<=', ['get', 'idx'], -1],
     paint: {
-      'circle-radius': ['case', ['boolean', ['feature-state', 'active'], false], 3.2, 1.8],
-      'circle-color': ['case',
-        ['boolean', ['feature-state', 'active'], false], '#ffd089',
-        '#ffffff'
-      ]
+      'circle-radius': ['case', activeExpr, 3.2, 1.8],
+      'circle-color': ['case', activeExpr, THEME.dotActiveColor, THEME.dotInactiveColor]
     }
   });
 
@@ -281,19 +278,7 @@ const distanceEl = document.getElementById('distance');
 const hudEl = document.getElementById('hud');
 const iconEl = document.getElementById('transport-icon');
 
-// Side-view emojis where possible. All face right (east) by default; we flip
-// horizontally when the vehicle is heading west.
-const TRANSPORT_EMOJI = {
-  flight: '✈️',
-  train: '🚄',
-  bus: '🚌',
-  car: '🚗',
-  ferry: '🚢',
-  metro: '🚊'
-};
-// Plane rotates to heading. Ground vehicles only flip on east/west.
-const ROTATES = new Set(['flight']);
-const FLIPS_HORIZONTAL = new Set(['train', 'bus', 'car', 'ferry', 'metro']);
+const { emoji: TRANSPORT_EMOJI, rotates: ROTATES, flipsHorizontal: FLIPS_HORIZONTAL } = TRANSPORT;
 
 let playing = false;
 let startedAt = 0;
@@ -315,7 +300,8 @@ function setTime(t) {
   // Throttle trail updates — quantize trailFrac to 1% so we don't push setData every frame.
   // Include segKind so transit→approach boundary forces a fresh build (otherwise
   // the partial-tip from the last transit frame persists into approach/dwell).
-  const quantFrac = Math.round(state.trailFrac * 100) / 100;
+  const q = RENDER.trailFracQuantum;
+  const quantFrac = Math.round(state.trailFrac * q) / q;
   const trailKey = `${state.trailToIdx}:${quantFrac}:${state.segKind}`;
   if (trailKey !== lastTrailKey) {
     const trail = trailCache.build(state.trailToIdx, state.trailFrac);

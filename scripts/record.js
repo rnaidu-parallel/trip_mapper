@@ -10,11 +10,19 @@ import { mkdir, rm } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { PRESETS, DEFAULT_PRESET } from '../src/presets.js';
 
-const URL = process.env.URL || 'http://127.0.0.1:5173/';
-const WIDTH = 1080;
-const HEIGHT = 1920;
-const FPS = Number(process.env.FPS || 60);
+const PRESET_NAME = process.env.PRESET || DEFAULT_PRESET;
+const preset = PRESETS[PRESET_NAME];
+if (!preset) {
+  console.error(`Unknown preset "${PRESET_NAME}". Available: ${Object.keys(PRESETS).join(', ')}`);
+  process.exit(1);
+}
+const BASE_URL = process.env.URL || 'http://127.0.0.1:5173/';
+const URL = `${BASE_URL}${BASE_URL.includes('?') ? '&' : '?'}preset=${PRESET_NAME}`;
+const WIDTH = preset.width;
+const HEIGHT = preset.height;
+const FPS = Number(process.env.FPS || 30);
 const FRAMES_DIR = path.resolve('frames');
 const OUT_DIR = path.resolve('out');
 const OUT_FILE = path.join(OUT_DIR, `journey-${Date.now()}.mp4`);
@@ -28,6 +36,7 @@ async function main() {
   await ensureDir(FRAMES_DIR, true);
   await ensureDir(OUT_DIR, false);
 
+  console.log(`Preset: ${PRESET_NAME} (${preset.label}) → ${WIDTH}×${HEIGHT} @ ${FPS}fps`);
   console.log('Launching browser...');
   const browser = await puppeteer.launch({
     headless: true,

@@ -7,9 +7,21 @@ html, body {
   overflow: hidden;
 }
 
+/* Defaults — overridden by main.js at boot based on the active preset.
+   Safe zones reserve space for the host platform's UI overlay so on-screen
+   text isn't clipped or covered. */
+:root {
+  --safe-top: 240px;
+  --safe-bottom: 290px;
+  --safe-left: 28px;
+  --safe-right: 28px;
+  --stage-aspect: 1080 / 1920;
+}
+
 #stage {
-  width: min(100vw, calc(100vh * 9 / 16));
-  height: min(100vh, calc(100vw * 16 / 9));
+  aspect-ratio: var(--stage-aspect);
+  width: min(100vw, calc(100vh * var(--stage-aspect)));
+  height: min(100vh, calc(100vw / (var(--stage-aspect))));
   margin: 0 auto;
   position: relative;
   background: #000;
@@ -61,8 +73,8 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* Tunable safe-zone padding; left HUD sits inside this bottom band */
-  padding: 240px 28px 290px;
+  /* Padding follows the active preset's safe zones (set on :root by main.js) */
+  padding: 36px var(--safe-right) var(--safe-bottom) var(--safe-left);
   z-index: 3;
 }
 
@@ -102,8 +114,8 @@ html, body {
 
 #counter {
   position: absolute;
-  top: 230px;  /* below IG Reel header overlay, nudged up from prior 290 */
-  right: 28px;
+  top: var(--safe-top);
+  right: var(--safe-right);
   font-size: 12px;
   font-weight: 500;
   letter-spacing: 2.5px;
@@ -112,8 +124,8 @@ html, body {
 }
 #distance {
   position: absolute;
-  top: 256px;
-  right: 28px;
+  top: calc(var(--safe-top) + 26px);
+  right: var(--safe-right);
   font-size: 20px;
   font-weight: 500;
   letter-spacing: 1.5px;

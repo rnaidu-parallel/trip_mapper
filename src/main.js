@@ -313,8 +313,10 @@ function setTime(t) {
     bearing: state.camera.bearing
   });
   // Throttle trail updates — quantize trailFrac to 1% so we don't push setData every frame.
+  // Include segKind so transit→approach boundary forces a fresh build (otherwise
+  // the partial-tip from the last transit frame persists into approach/dwell).
   const quantFrac = Math.round(state.trailFrac * 100) / 100;
-  const trailKey = `${state.trailToIdx}:${quantFrac}`;
+  const trailKey = `${state.trailToIdx}:${quantFrac}:${state.segKind}`;
   if (trailKey !== lastTrailKey) {
     const trail = trailCache.build(state.trailToIdx, state.trailFrac);
     const trailSrc = map.getSource('trail');

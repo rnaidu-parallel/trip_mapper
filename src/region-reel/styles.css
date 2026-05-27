@@ -1,0 +1,149 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #000;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #fff;
+  overflow: hidden;
+}
+
+:root {
+  --safe-top: 240px;
+  --safe-bottom: 290px;
+  --safe-left: 28px;
+  --safe-right: 28px;
+}
+
+#stage {
+  width: min(100vw, calc(100vh * 9 / 16));
+  height: min(100vh, calc(100vw * 16 / 9));
+  margin: 0 auto;
+  position: relative;
+  background: #000;
+  overflow: hidden;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+/* Photo layer above the map. transform-origin: center for punch-zoom. */
+#photo-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  opacity: 0;
+  pointer-events: none;
+  background: #000;
+  will-change: opacity, transform;
+}
+
+#photo-current,
+#photo-fallback {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  will-change: transform;
+}
+
+/* Fallback card when a photo file is missing — generated from the city name. */
+#photo-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-weight: 200;
+  font-size: 96px;
+  letter-spacing: -2px;
+  color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(160deg, #2c3e50 0%, #1a2a3a 60%, #0e1820 100%);
+  z-index: -1;
+}
+
+/* Flash overlay for punch-zoom snap moment */
+#flash {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+#hud {
+  position: absolute;
+  left: var(--safe-left);
+  bottom: var(--safe-bottom);
+  z-index: 7;
+  text-align: left;
+  pointer-events: none;
+  will-change: opacity, transform;
+}
+
+#hud-region {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 3.5px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 10px;
+}
+
+#hud-stop {
+  font-size: 52px;
+  font-weight: 300;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: #fff;
+}
+
+/* Subtle film grain */
+#grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='5'/><feColorMatrix values='0 0 0 0 1   0 0 0 0 1   0 0 0 0 1   0 0 0 0.6 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background-size: 160px 160px;
+}
+
+#controls {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  z-index: 100;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#controls button {
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+  border: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+#controls input[type='range'] { width: 220px; }
+#time { font-variant-numeric: tabular-nums; opacity: 0.7; min-width: 64px; }
+
+body.recording #controls { display: none; }
+body.recording .maplibregl-ctrl-bottom-left,
+body.recording .maplibregl-ctrl-bottom-right { display: none !important; }

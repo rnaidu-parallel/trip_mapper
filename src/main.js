@@ -467,17 +467,37 @@ function startUI() {
 }
 
 // Hook for Puppeteer frame-by-frame rendering.
-// Sets the timeline to time `t_ms`, waits for tiles, resolves.
+// Sets the timeline to time `t_ms`, waits for tiles + source data, resolves.
 window.__renderFrame = async function (t_ms) {
   setTime(t_ms);
-  // Wait for map to finish loading tiles for new position
+  // 1) Wait until the trail source has finished processing any setData call
+  //    (geometry tessellation is async; otherwise the screenshot can capture
+  //    the previous frame's trail before the new one renders).
   await new Promise((resolve) => {
-    if (map.loaded() && !map.isMoving() && !map.isZooming() && !map.isRotating()) {
-      // still wait one tick to ensure paint
+    const timeout = setTimeout(resolve, 1500);
+    const check = () => {
+      if (map.isSourceLoaded('trail')) {
+        clearTimeout(timeout);
+        resolve();
+      } else {
+        map.once('sourcedata', check);
+      }
+    };
+    check();
+  });
+  // 2) Wait for the map to be idle (raster tiles loaded, no in-flight render)
+  await new Promise((resolve) => {
+    const timeout = setTimeout(resolve, 2500);
+    const finish = () => {
+      clearTimeout(timeout);
+      // Two RAFs to guarantee the paint after idle has flushed
       requestAnimationFrame(() => requestAnimationFrame(resolve));
-      return;
+    };
+    if (map.areTilesLoaded() && !map.isMoving() && !map.isZooming() && !map.isRotating()) {
+      finish();
+    } else {
+      map.once('idle', finish);
     }
-    map.once('idle', () => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   });
 };
 

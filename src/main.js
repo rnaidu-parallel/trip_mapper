@@ -168,16 +168,17 @@ function setupMap() {
   // This keeps the active dot's amber glow from covering the trail's last
   // ~30px near the destination; ring and dot sit on top of trail end.
 
-  // Soft amber glow on active stop only — drawn UNDER the trail
+  // Soft amber glow on active stop only — drawn UNDER the trail. Kept small
+  // so it doesn't create a visible halo between trail tip and dot center.
   map.addLayer({
     id: 'stops-active-glow',
     type: 'circle',
     source: 'stops',
     paint: {
-      'circle-radius': ['case', ['boolean', ['feature-state', 'active'], false], 16, 0],
+      'circle-radius': ['case', ['boolean', ['feature-state', 'active'], false], 8, 0],
       'circle-color': '#ffd089',
-      'circle-opacity': 0.35,
-      'circle-blur': 0.6
+      'circle-opacity': 0.22,
+      'circle-blur': 0.5
     }
   });
 
@@ -201,7 +202,7 @@ function setupMap() {
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: {
       'line-color': '#ffffff',
-      'line-width': 2.2,
+      'line-width': 2.8,
       'line-opacity': 0.95
     }
   });
@@ -336,9 +337,10 @@ function setTime(t) {
     lastActiveIdx = idx;
   }
 
-  // Label + visible-stop visibility: show for stops at or before the active one.
-  // During transit, only show up to previous stop until we land.
-  const visibleUpTo = state.segKind === 'transit' ? idx - 1 : idx;
+  // Show all stops up to (and including) the active one. During transit the
+  // active idx is already the source (pre-arrival), so this filter naturally
+  // hides the destination's marker/label until the camera lands.
+  const visibleUpTo = idx;
   if (visibleUpTo !== lastVisibleUpTo) {
     const filt = ['<=', ['get', 'idx'], visibleUpTo];
     if (map.getLayer('stops-label')) map.setFilter('stops-label', filt);

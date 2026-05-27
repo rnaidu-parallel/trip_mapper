@@ -177,8 +177,9 @@ export function stateAtTime(timeline, time) {
     };
     trailToIdx = seg.stopIdx - 1; // previous stop already finished
     trailFrac = e; // draw progressively
-    activeStop = seg.stop;
-    hudOpacity = Math.max(0, 1 - localT * 2); // fade out previous label
+    // HUD keeps showing source until camera lands; B's label appears only on approach.
+    activeStop = seg.prev;
+    hudOpacity = Math.max(0, 1 - localT * 2); // fade out source's label
 
     // Transport icon: sample current point along segCoords at trailFrac
     if (seg.segCoords && seg.segCoords.length >= 2) {
@@ -201,7 +202,8 @@ export function stateAtTime(timeline, time) {
     cumKm += easeInOutCubic(localT) * seg.segKm;
   }
 
-  return { camera, trailToIdx, trailFrac, activeStop, segKind: seg.kind, hudOpacity, time: t, transit, activeStopIdx: seg.stopIdx, transitFrac: seg.kind === 'transit' ? localT : null, cumKm };
+  const activeStopIdx = seg.kind === 'transit' ? seg.stopIdx - 1 : seg.stopIdx;
+  return { camera, trailToIdx, trailFrac, activeStop, segKind: seg.kind, hudOpacity, time: t, transit, activeStopIdx, transitFrac: seg.kind === 'transit' ? localT : null, cumKm };
 }
 
 // Cached trail builder. Keeps the locked-in portion (completed segments) as a

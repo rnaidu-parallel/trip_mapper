@@ -61,7 +61,8 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 36px 28px 80px;
+  /* Padding clears IG Reel UI safe zones — top header (~250px) + bottom caption/UI (~350px) */
+  padding: 290px 28px 360px;
   z-index: 3;
 }
 
@@ -72,17 +73,17 @@ html, body {
 }
 
 #region-label {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   letter-spacing: 3.5px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 10px;
   transition: opacity 0.35s ease;
 }
 
 #stop-label {
-  font-size: 44px;
+  font-size: 52px;
   font-weight: 300;
   letter-spacing: -1px;
   line-height: 1;
@@ -101,22 +102,22 @@ html, body {
 
 #counter {
   position: absolute;
-  top: 36px;
+  top: 290px;  /* below IG Reel header safe zone */
   right: 28px;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   letter-spacing: 2.5px;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.6);
   text-transform: uppercase;
 }
 #distance {
   position: absolute;
-  top: 56px;
+  top: 316px;
   right: 28px;
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 500;
   letter-spacing: 1.5px;
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.95);
   font-variant-numeric: tabular-nums;
 }
 

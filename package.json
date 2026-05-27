@@ -1,8 +1,23 @@
 {
-  "name": "travel-map",
-  "private": true,
+  "name": "trip-mapper",
   "version": "0.1.0",
+  "private": true,
   "type": "module",
+  "description": "Turn a list of places into a cinematic 9:16 map video — animated camera, great-circle flights, real road routes, and a running odometer. Built for Instagram Reels, TikTok, and YouTube Shorts.",
+  "keywords": [
+    "travel",
+    "map",
+    "reel",
+    "video",
+    "instagram",
+    "tiktok",
+    "youtube-shorts",
+    "maplibre",
+    "animation",
+    "great-circle",
+    "osrm"
+  ],
+  "license": "MIT",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

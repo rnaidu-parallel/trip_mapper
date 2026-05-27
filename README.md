@@ -11,7 +11,7 @@ keys, no credit card.
 ## Quick start
 
 ```bash
-git clone https://github.com/<you>/trip_mapper.git
+git clone https://github.com/rnaidu-parallel/trip_mapper.git
 cd trip_mapper
 npm install
 npm run dev          # http://127.0.0.1:5173/

@@ -61,8 +61,8 @@ html, body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  /* Padding clears IG Reel UI safe zones — top header (~250px) + bottom caption/UI (~350px) */
-  padding: 290px 28px 360px;
+  /* Tunable safe-zone padding; left HUD sits inside this bottom band */
+  padding: 240px 28px 290px;
   z-index: 3;
 }
 
@@ -102,7 +102,7 @@ html, body {
 
 #counter {
   position: absolute;
-  top: 290px;  /* below IG Reel header safe zone */
+  top: 230px;  /* below IG Reel header overlay, nudged up from prior 290 */
   right: 28px;
   font-size: 12px;
   font-weight: 500;
@@ -112,7 +112,7 @@ html, body {
 }
 #distance {
   position: absolute;
-  top: 316px;
+  top: 256px;
   right: 28px;
   font-size: 20px;
   font-weight: 500;
